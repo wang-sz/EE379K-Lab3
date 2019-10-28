@@ -7,7 +7,7 @@ FLAGS = --shell-escape
 
 $(PAPER).pdf: $(TEX) $(BIB)
 	pdflatex $(FLAGS) $(PAPER)
-	# bibtex $(PAPER)
+	bibtex $(PAPER)
 
 clean:
 	rm -f *.aux *.bbl *.blg *.log *.out *.fls *.fdb_latexmk 

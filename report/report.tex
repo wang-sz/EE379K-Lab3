@@ -90,9 +90,115 @@
 \end{description}
 \subsection*{Exercise Set 3}
 \begin{description}
-  \item[1-8.]
+  \item[1-8.] Based on the APT41 report, it seems that an APT actor would be interested in targetting the video game industry
+    most likely for personal financial gain and/or hobbyist interests. For example, by manipulating virtual currencies, they
+    can prepare and sell accounts to sell in underground markets, or convert the virtual currency into real money through real
+    money transfer purchases. Additionally, APT41 has utilized compromised digital certificates from video game studios in order
+    to sign malware, since people tend to not check exactly what they download and install when they just want to play a game.
+  \item[1-9.] Hammertoss is an effective tool that tries to prevent detection of malware by adding layers of complexity to
+    obfuscate it, as well as mimicking normal user behavior. As a result, it tends to be very hard to detect. There are five
+    stages that describe how it works. First, it looks for instructions on Twitter and is configured with certain restrictions
+    to make its behavior blend in with normal traffic. Then, if that day's Twitter handle has been registered, the account
+    tweets a URL and a hashtag, which tells at what offset the data begins and gives part of the encryption key needed to
+    decrypt the data. Third, once it has obtained the Github URL from the second step, it downloads everything from that Github
+    URL. Fourth, it searches the downloaded website contents for any images at least as large as the offset from step two, which
+    contains hidden information that is then decrypted and executed. Finally, the encrypted info may contain instructions to
+    execute a command in Powershell or some other file I/O or program execution. For example, it could upload sensitive info
+    from the victim onto a cloud storage, which the attackers can easily access. All these layers and steps make it hard to 
+    detect, especially since it employs legitimate web services that are widely used and implement SSL encryption which can
+    disguise malicious traffic as normal traffic.
+  \item[1-10.] Sudo caching is when an attacker abuses poor configurations of sudo's credential cache to see if the last entered
+    credentials fall within the timeout range, which means that malware can then execute with elevated privileges without
+    needing sudo credentials. This can be easily detected since sudo can also log all input and output using the \verb|LOG_INPUT| and
+    \verb|LOG_OUTPUT| settings in \verb|/etc/sudoers|.
+  \item[1-11.] MimiPenguin is a credential dumper, which means it retrieves and outputs the login and password of the current
+    Linux user. It is part of the Credential Dumping stage of the APT lifecycle and can be used to move laterally to access
+    restricted information.~\cite{cred_dump}
 \end{description}
-
-% \bibliography{bibliography}
-% \bibliographystyle{ieeetr}
+\section*{Part 2 - Fuzzing}
+\begin{description}
+  \item[2-1.] Notable behavior included crashing several times, likely due to some buffer overflow. This would look like
+    Figure~\ref{fig:crash} on the Windows 7 VM. Some example commands that caused this were \verb|TRUN| followed by a random
+    string of length 2100, \verb|KSTET| followed by a random string of length 100, or \verb|HTER| followed by a random string
+    of length 4200.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1\linewidth]{./crash.png}
+      \caption{vulnserver program crashing on Windows 7 VM.}
+      \label{fig:crash}
+    \end{figure}
+  \item[2-2.] The server crash was likely due to a buffer overflow of the second argument. In the case of the \verb|KSTET|
+    command, the second argument was a string of length 100 of random characters.
+\end{description}
+\section*{Part 3 - Exploitation}
+\begin{description}
+  \item[3-1.] The exploit is using HTTP.
+  \item[3-2.] The Authorization header contains the payload.
+  \item[3-3.] The HTTP Authorization request header is used to store encrypted credentials to authenticate a user agent with a
+    server. The payload is encoded using Basic (base64) and, once decoded, results in a hexdump of
+    \verb|0000 02 eb 61 a2 b8 b3 6a d8  a8|.
+  \item[3-4.] 1012 bytes of overflow to the buffer is required before EIP is overwritten. In this case, it is being overwritten
+    with the target return address, \verb|0x0040ae0f|.
+  \item[3-5.] The above value returns to the exploit code.
+  \item[3-6.] The Space variable has the value 600 and specifies how many bytes are given for the payload to reside in. Larger
+    values could possibly cause corruption or truncation of the exploit.
+  \item[3-7.] The exploit's exit function is 'thread' and this impacts the stability of the vulnerable program after the exploit
+    is sent.~\cite{metasploit}
+  \item[3-8.] The CVE number for this exploit is \verb|CVE-2009-0183|.
+  \item[3-9.] The CVSS base score for this exploit is 10. This metric is based off of the fact that it is easily exploitable
+    and has high impact, since remote attackers can run any arbitrary code just using a long Authorization header in an HTTP
+    request.~\cite{nvd}
+  \item[3-10.] The command \verb|getuid| shows the current user as \verb|victimbox\class|.
+  \item[3-11.] The command \verb|getwd| shows the current directory as \\\verb|C:\Program Files\Free Download Manager|.
+  \item[3-12.] The command \verb|sysinfo| shows the OS kernel and build version as \verb|Windows 7 (6.1 Build 7601)|.
+  \item[3-13.] The commands \verb|getpid| and \verb|ps| show that the process being executed has name \verb|fdmwi.exe| and PID \verb|2192|.
+  \item[3-14.] The command \verb|ifconfig| shows that the victim has 3 network interfaces and the MAC address of the one that is
+    connected to is \\\verb|08:00:27:68:ed:0d|.
+  \item[3-15.] Trying to access \verb|C:\Users\admin| results in an error saying that access has been denied, as shown below in
+    Figure~\ref{fig:admin_dir}.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1\linewidth]{admin_dir.png}
+      \caption{Access denied to admin's user directory.}
+      \label{fig:admin_dir}
+    \end{figure}
+  \item[3-16.] Running \verb|getsystem| results in another error saying that access has been denied, as shown below in
+    Figure~\ref{fig:getsystem}. This is because Windows 7 is blocking the current user with normal user privileges from
+    escalating privileges directly due to the User Account Control module.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1\linewidth]{./getsystem.png}
+      \caption{Access denied to attempt to become SYSTEM user.}
+      \label{fig:getsystem}
+    \end{figure}
+  \item[3-17.] Using the exploit shown in Figure~\ref{fig:esc_exploit} to open another meterpreter session, \verb|getuid| now
+    returns \verb|NT AUTHORITY\SYSTEM| as the current user.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1\linewidth]{./exploit.png}
+      \caption{Exploit used to open an escalated session.}
+      \label{fig:esc_exploit}
+    \end{figure}
+  \item[3-18.] The privilege escalation method used was \verb|Schlamperei|, as can be seen in Figure~\ref{fig:esc_exploit}.
+  \item[3-19.] The commands \verb|getpid| and \verb|ps| now show that the current process is \verb|winlogon.exe| with PID \verb|432|.
+  \item[3-20.] After getting the hashed passwords using \verb|hashdump|, with output shown in Figure~\ref{fig:hashdump}, the passwords
+    were cracked by pasting them into https://crackstation.net/~\cite{crack}.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1\linewidth]{./hashdump.png}
+      \caption{Output of hashdump command.}
+      \label{fig:hashdump}
+    \end{figure}
+  \item[3-21.] Decrypting admin's NTLM Hash shows that admin's password is \verb|iloveponies|.
+  \item[3-22.] Using the elevated session, which can go into \verb|C:\Users\admin|, the contents of \verb|secret.txt| are shown
+    below in Figure~\ref{fig:secret}.
+    \begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.6\linewidth]{./secret.png}
+      \caption{Contents of admin's secret.txt file.}
+      \label{fig:secret}
+    \end{figure}
+\end{description}
+\bibliography{bibliography}
+\bibliographystyle{ieeetr}
 \end{document}
