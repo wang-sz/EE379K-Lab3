@@ -128,7 +128,8 @@
       \label{fig:crash}
     \end{figure}
   \item[2-2.] The server crash was likely due to a buffer overflow of the second argument. In the case of the \verb|KSTET|
-    command, the second argument was a string of length 100 of random characters.
+    command, the second argument was a string of length 100 of random characters. This can be exploited by overwriting values
+    on the stack and cause the program to execute some arbitrary code instead of functioning properly.
 \end{description}
 \section*{Part 3 - Exploitation}
 \begin{description}
